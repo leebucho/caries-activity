@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>う蝕活動性チェック</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap">
+<style>
+/* Layout: 1カラムのチェアサイド用。上に部位切替、項目カードを縦に並べ、下部に常時判定バー */
+:root {
+  --bg: #EDF2F0;
+  --surface: #FFFFFF;
+  --ink: #15302E;
+  --muted: #58706C;
+  --line: #D2DDDA;
+  --accent: #0E6A63;
+  --accent-soft: #DCEEEB;
+  --active: #C13F2A;
+  --active-soft: #FBE6E1;
+  --inactive: #3B6A93;
+  --inactive-soft: #E1EBF4;
+  --panel: #FAF7F0;
+  --font-display: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
+  --font-body: "BIZ UDPGothic", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1817; --surface: #162322; --ink: #E2EEEB; --muted: #9AB0AC; --line: #2A3B39;
+    --accent: #4FB8AD; --accent-soft: #1C3634; --active: #F07C66; --active-soft: #3A201B;
+    --inactive: #86B0D8; --inactive-soft: #1B2A38; --panel: #F3EEE3; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1817; --surface: #162322; --ink: #E2EEEB; --muted: #9AB0AC; --line: #2A3B39;
+  --accent: #4FB8AD; --accent-soft: #1C3634; --active: #F07C66; --active-soft: #3A201B;
+  --inactive: #86B0D8; --inactive-soft: #1B2A38; --panel: #F3EEE3; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { color-scheme: light; }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.6;
+  -webkit-tap-highlight-color: transparent;
+}
+.wrap { max-width: 560px; margin: 0 auto; padding-inline: 16px; padding-block: 16px 120px; display: flex; flex-direction: column; gap: 16px; }
+
+header { display: flex; flex-direction: column; gap: 4px; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; color: var(--muted); }
+h1 { font-family: var(--font-display); font-weight: 900; font-size: 24px; line-height: 1.3; margin: 0; text-wrap: balance; }
+
+.seg { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 8px; }
+.seg-inner { display: grid; grid-template-columns: 1fr 1fr; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 4px; gap: 4px; }
+.seg button {
+  font: 700 15px/1.2 var(--font-display); color: var(--muted); background: transparent;
+  border: 0; border-radius: 9px; padding: 12px 8px; cursor: pointer;
+}
+.seg button[aria-selected="true"] { background: var(--accent); color: var(--surface); }
+.seg button:focus-visible, .opt:focus-visible, .btn:focus-visible, .bar:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.prep { font-size: 13px; color: var(--muted); background: var(--surface); border: 1px dashed var(--line); border-radius: 10px; padding: 10px 12px; }
+.prep b { color: var(--ink); }
+
+.q { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.q-head { display: flex; align-items: baseline; gap: 8px; }
+.q-no { font: 700 13px/1 var(--font-display); color: var(--accent); background: var(--accent-soft); border-radius: 6px; padding: 5px 7px; flex: none; }
+.q h2 { font: 700 17px/1.4 var(--font-display); margin: 0; }
+.q .hint { font-size: 12.5px; color: var(--muted); margin: -2px 0 0; }
+.opts { display: grid; gap: 8px; }
+.opts.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.opts.n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.opt {
+  position: relative; display: flex; flex-direction: column; gap: 6px; text-align: left;
+  background: var(--surface); color: var(--ink); border: 2px solid var(--line); border-radius: 12px;
+  padding: 6px 6px 9px; cursor: pointer; font: inherit; min-width: 0;
+}
+.opt .pic { background: var(--panel); border-radius: 8px; overflow: hidden; line-height: 0; }
+.opt .pic svg, .opt .pic img { width: 100%; height: auto; display: block; }
+.opt .lbl { font: 700 14px/1.35 var(--font-display); padding-inline: 2px; }
+.opt .sub { font-size: 11.5px; line-height: 1.45; color: var(--muted); padding-inline: 2px; }
+.opt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.opt[aria-pressed="true"]::after {
+  content: "✓"; position: absolute; top: 10px; right: 10px; width: 24px; height: 24px; border-radius: 50%;
+  background: var(--accent); color: var(--surface); font: 700 14px/24px var(--font-body); text-align: center;
+}
+
+.result { border-radius: 16px; padding: 18px 16px; border: 2px solid var(--line); background: var(--surface); display: flex; flex-direction: column; gap: 12px; scroll-margin-top: 80px; }
+.result.pending { border-style: dashed; color: var(--muted); text-align: center; font-size: 14px; }
+.result.is-active { border-color: var(--active); background: var(--active-soft); }
+.result.is-inactive { border-color: var(--inactive); background: var(--inactive-soft); }
+.verdict { display: flex; flex-direction: column; gap: 2px; }
+.verdict .k { font-size: 12px; letter-spacing: .08em; color: var(--muted); }
+.verdict .v { font: 900 30px/1.2 var(--font-display); }
+.is-active .verdict .v { color: var(--active); }
+.is-inactive .verdict .v { color: var(--inactive); }
+.verdict .d { font-size: 13px; color: var(--muted); }
+.action { background: var(--surface); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.action .ttl { font: 700 18px/1.4 var(--font-display); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 13px; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; background: var(--bg); }
+.action p { margin: 0; font-size: 13px; color: var(--muted); }
+.score { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.score td { padding: 5px 2px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.score td:last-child { text-align: right; white-space: nowrap; }
+.score tr.total td { font-weight: 700; border-bottom: 0; padding-top: 8px; }
+.note { font-size: 12px; color: var(--muted); margin: 0; }
+.btn { font: 700 14px/1 var(--font-display); color: var(--accent); background: transparent; border: 1.5px solid var(--accent); border-radius: 10px; padding: 12px 16px; cursor: pointer; align-self: center; }
+
+footer { font-size: 11.5px; color: var(--muted); line-height: 1.6; display: flex; flex-direction: column; gap: 6px; }
+footer p { margin: 0; }
+
+.bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+  background: var(--surface); border-top: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  font: 700 15px/1.3 var(--font-display); cursor: pointer; border-left: 0; border-right: 0; width: 100%; color: var(--ink);
+}
+.bar .dots { display: flex; gap: 5px; }
+.bar .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
+.bar .dot.on { background: var(--accent); }
+.bar .pill { border-radius: 999px; padding: 6px 12px; color: var(--surface); }
+.bar .pill.a { background: var(--active); }
+.bar .pill.i { background: var(--inactive); }
+
+@media (max-width: 380px) {
+  .opts.n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .opt .lbl { font-size: 13px; }
+  .opt .sub { font-size: 11px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .opt, .seg button { transition: border-color .15s, background-color .15s; }
+  html { scroll-behavior: smooth; }
+}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">チェアサイド用 ・ 1回の診査で判定</span>
+    <h1>う蝕活動性チェック</h1>
+  </header>
+
+  <div class="seg" role="tablist" aria-label="部位">
+    <div class="seg-inner">
+      <button id="tab-crown" role="tab" aria-selected="true" data-mode="crown">歯冠部う蝕</button>
+      <button id="tab-root" role="tab" aria-selected="false" data-mode="root">根面う蝕</button>
+    </div>
+  </div>
+
+  <div class="prep" id="prep"></div>
+  <div id="questions" style="display:flex;flex-direction:column;gap:16px"></div>
+  <section class="result pending" id="result" aria-live="polite"></section>
+
+  <footer>
+    <p>判定基準：Ekstrand KR, Zero DT, Martignon S, Pitts NB. Lesion activity assessment. Monogr Oral Sci 2009;21:63–90（歯冠部＝Fig. 10、根面＝Table 7）。</p>
+    <p>1回の診査による活動性評価は「可能性」の判断です。治療方針は歯科医師と相談してください。イラストは参考用の模式図です。</p>
+  </footer>
+</div>
+
+<button class="bar" id="bar" type="button"></button>
+
+<script>
+(function () {
+  /* ---------- イラスト（差し替え時は各 option の pic を <img src="..."> に置き換え） ---------- */
+  var C = {
+    enamel: "#F2E9D6", enamelLine: "#BFAE88", fissure: "#A8936A",
+    root: "#E6CF9E", rootLine: "#B79C63", gum: "#E7A3A8", gumLine: "#C97C83",
+    probe: "#5E6B73", mark: "#D6452F", zone: "#F0B43C", text: "#3F4A48"
+  };
+  var uid = 0;
+  function svg(inner, defs) {
+    return '<svg viewBox="0 0 120 90" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      (defs ? '<defs>' + defs + '</defs>' : '') + inner + '</svg>';
+  }
+  function blur(id, s) { return '<filter id="' + id + '" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="' + s + '"/></filter>'; }
+
+  // 咬合面観の大臼歯
+  function occlusal(extra, defs) {
+    var base =
+      '<rect x="16" y="8" width="88" height="74" rx="30" fill="' + C.enamel + '" stroke="' + C.enamelLine + '" stroke-width="1.5"/>' +
+      '<path d="M34 46 Q47 40 60 45 Q73 50 86 44 M60 45 L57 20 M60 45 L63 70 M34 46 L28 34 M86 44 L92 58" fill="none" stroke="' + C.fissure + '" stroke-width="1.6" stroke-linecap="round"/>';
+    return svg(base + extra, defs);
+  }
+  function gloss() { return '<ellipse cx="38" cy="22" rx="12" ry="5" fill="#FFFFFF" opacity=".7" transform="rotate(-20 38 22)"/>'; }
+
+  var picBrown = function () {
+    return occlusal(gloss() +
+      '<path d="M44 42 Q52 40 60 45 Q68 49 76 47 M60 45 L58 32" fill="none" stroke="#7D4F26" stroke-width="6" stroke-linecap="round" opacity=".85"/>' +
+      '<path d="M44 42 Q52 40 60 45 Q68 49 76 47" fill="none" stroke="#5A3517" stroke-width="2" stroke-linecap="round"/>');
+  };
+  var picWhite = function () {
+    var f = "b" + (++uid);
+    return occlusal(
+      '<path d="M40 44 Q50 38 60 45 Q70 51 80 46 M60 45 L58 28" fill="none" stroke="#C9BC9C" stroke-width="20" stroke-linecap="round" opacity=".45" filter="url(#' + f + ')"/>' +
+      '<path d="M40 44 Q50 38 60 45 Q70 51 80 46 M60 45 L58 28" fill="none" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" filter="url(#' + f + ')"/>' +
+      '<path d="M42 44 Q50 39 60 45 Q70 50 78 46 M60 45 L58 30" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>' +
+      '<path d="M44 44 Q52 41 60 45 Q68 49 76 46" fill="none" stroke="' + C.fissure + '" stroke-width="1.6" stroke-linecap="round"/>',
+      blur(f, 2.5));
+  };
+  var picCavity = function () {
+    var f = "b" + (++uid);
+    return occlusal(
+      '<ellipse cx="60" cy="46" rx="22" ry="15" fill="#6C7784" opacity=".45" filter="url(#' + f + ')"/>' +
+      '<ellipse cx="60" cy="45" rx="13" ry="9" fill="#FFFFFF" opacity=".75" filter="url(#' + f + ')"/>' +
+      '<path d="M53 43 Q56 38 61 40 Q67 39 68 45 Q66 51 60 50 Q53 51 53 43 Z" fill="#3A2A1E"/>',
+      blur(f, 3));
+  };
+
+  // 頬側面観（2歯＋歯肉）: プラーク停滞部位
+  function buccal(markX, markY) {
+    var tA = '<path d="M18 66 C12 46 11 30 15 20 Q18 7 29 7 Q34 7 38 11 Q43 7 48 7 Q59 7 62 20 C65 30 64 46 58 66 Z" fill="' + C.enamel + '" stroke="' + C.enamelLine + '" stroke-width="1.5"/>';
+    var tB = '<path d="M70 66 C64 46 63 30 66 20 Q69 7 80 7 Q85 7 90 11 Q95 7 100 7 Q111 7 114 20 C117 30 116 46 110 66 Z" fill="' + C.enamel + '" stroke="' + C.enamelLine + '" stroke-width="1.5"/>';
+    var groove = '<path d="M38 11 L38 30" stroke="' + C.fissure + '" stroke-width="1.4" stroke-linecap="round"/>';
+    var gum = '<path d="M0 66 Q18 58 36 62 Q52 65 58 54 Q64 44 70 54 Q78 65 94 62 Q110 58 120 66 L120 90 L0 90 Z" fill="' + C.gum + '" stroke="' + C.gumLine + '" stroke-width="1.2"/>';
+    var zones =
+      '<g fill="none" stroke="' + C.zone + '" stroke-linecap="round" opacity=".75">' +
+      '<path d="M8 61 Q22 55 36 58 Q50 61 56 51" stroke-width="6"/>' +
+      '<path d="M72 51 Q80 61 94 58 Q108 55 116 60" stroke-width="6"/>' +
+      '</g>' +
+      '<ellipse cx="64" cy="37" rx="4.5" ry="8" fill="' + C.zone + '" opacity=".75"/>' +
+      '<circle cx="38" cy="30" r="4" fill="' + C.zone + '" opacity=".75"/>';
+    var mark = '<circle cx="' + markX + '" cy="' + markY + '" r="7.5" fill="none" stroke="' + C.mark + '" stroke-width="2.2" stroke-dasharray="3 2"/>' +
+      '<circle cx="' + markX + '" cy="' + markY + '" r="2.6" fill="#FFFFFF" stroke="#D9D2C0" stroke-width=".8"/>';
+    return svg(tA + tB + groove + gum + zones + mark);
+  }
+
+  // 断面＋探針
+  function probeSection(surface, tipX, tipY, lesionFill, extra) {
+    var probe = '<path d="M' + (tipX + 34) + ' 6 L' + (tipX + 6) + ' ' + (tipY - 8) + ' Q' + (tipX + 1) + ' ' + (tipY - 4) + ' ' + tipX + ' ' + tipY +
+      '" fill="none" stroke="' + C.probe + '" stroke-width="3.2" stroke-linecap="round"/>' +
+      '<path d="M' + (tipX + 34) + ' 6 L' + (tipX + 48) + ' -4" stroke="' + C.probe + '" stroke-width="6" stroke-linecap="round"/>';
+    return svg(surface + (lesionFill || '') + (extra || '') + probe);
+  }
+  var picSmooth = function (isRoot) {
+    var fill = isRoot ? C.root : C.enamel, line = isRoot ? C.rootLine : C.enamelLine;
+    var s = '<path d="M0 52 L120 52 L120 90 L0 90 Z" fill="' + fill + '"/><path d="M0 52 L120 52" stroke="' + line + '" stroke-width="1.6"/>';
+    var arrow = '<path d="M26 44 L78 44" stroke="' + C.text + '" stroke-width="1.3" stroke-dasharray="3 3"/><path d="M26 44 l5 -3 M26 44 l5 3" stroke="' + C.text + '" stroke-width="1.3" fill="none"/>';
+    var lesion = isRoot ? '<rect x="30" y="52.8" width="60" height="7" rx="3" fill="#5A3A22" opacity=".55"/>' : '<rect x="30" y="52.8" width="60" height="7" rx="3" fill="#FFFFFF" opacity=".0"/>';
+    return probeSection(s, 60, 51, lesion, arrow);
+  };
+  var picRough = function () {
+    var s = '<path d="M0 52 L28 52 L32 49 L36 55 L40 50 L45 56 L49 50 L54 57 L58 51 L63 58 L67 50 L72 56 L76 50 L81 55 L86 51 L92 52 L120 52 L120 90 L0 90 Z" fill="' + C.enamel + '" stroke="' + C.enamelLine + '" stroke-width="1.4"/>';
+    var lesion = '<path d="M28 53 L92 53 Q86 68 60 70 Q34 68 28 53 Z" fill="#FFFFFF" opacity=".9"/><path d="M40 57 Q60 66 80 57" fill="none" stroke="#C9A36A" stroke-width="5" opacity=".55"/>';
+    var jitter = '<path d="M84 22 l4 -3 M88 27 l5 -2 M86 32 l5 0" stroke="' + C.text + '" stroke-width="1.3" stroke-linecap="round"/>';
+    return probeSection(s, 60, 58, lesion, jitter);
+  };
+
+  // 根面：探針の硬さ
+  function rootTexture(depth, color) {
+    var dent = depth === 0 ? '' : '<path d="M' + (60 - 6 - depth) + ' 52 Q60 ' + (52 + depth * 2) + ' ' + (60 + 6 + depth) + ' 52" fill="' + color + '" stroke="#8C6A38" stroke-width="1"/>';
+    var s = '<path d="M0 52 L120 52 L120 90 L0 90 Z" fill="' + C.root + '"/><path d="M0 52 L120 52" stroke="' + C.rootLine + '" stroke-width="1.6"/>' +
+      '<path d="M26 52.8 L94 52.8 Q88 64 60 66 Q32 64 26 52.8 Z" fill="' + color + '" opacity=".8"/>' + dent;
+    return probeSection(s, 60, 51 + depth * 1.8, '', depth >= 6 ? '<path d="M44 40 L50 46 M76 40 L70 46" stroke="' + C.text + '" stroke-width="1.3" stroke-linecap="round"/>' : '');
+  }
+
+  // 根面：辺縁の形
+  var picContourSmooth = function () {
+    return svg('<path d="M0 44 L30 44 Q44 45 50 54 Q60 62 70 54 Q76 45 90 44 L120 44 L120 90 L0 90 Z" fill="' + C.root + '" stroke="' + C.rootLine + '" stroke-width="1.5"/>' +
+      '<path d="M34 45 Q46 47 52 56 Q60 62 68 56 Q74 47 86 45 Q76 66 60 67 Q44 66 34 45 Z" fill="#6B4526" opacity=".55"/>' +
+      '<text x="60" y="32" font-size="9" text-anchor="middle" fill="' + C.text + '" font-family="sans-serif">なだらか</text>');
+  };
+  var picContourIrregular = function () {
+    return svg('<path d="M0 44 L34 44 L36 47 L41 46 L39 52 L44 54 L42 62 L48 66 L56 64 L60 70 L66 64 L73 67 L77 60 L74 55 L80 52 L78 47 L84 46 L86 44 L120 44 L120 90 L0 90 Z" fill="' + C.root + '" stroke="' + C.rootLine + '" stroke-width="1.5"/>' +
+      '<path d="M38 50 L44 54 L42 62 L48 66 L56 64 L60 70 L66 64 L73 67 L77 60 L74 55 L80 52 Q78 70 60 76 Q40 72 38 50 Z" fill="#C79A4E" opacity=".7"/>' +
+      '<text x="60" y="32" font-size="9" text-anchor="middle" fill="' + C.text + '" font-family="sans-serif">ギザギザ</text>');
+  };
+
+  // 根面：側面観（歯冠＋露出根面＋歯肉）
+  function rootSide(lesionCy, lesionColor, withBracket) {
+    var crown = '<path d="M30 34 C28 18 34 4 44 4 Q52 4 60 9 Q68 4 76 4 C86 4 92 18 90 34 Z" fill="' + C.enamel + '" stroke="' + C.enamelLine + '" stroke-width="1.5"/>';
+    var root = '<path d="M30 34 L90 34 L86 90 L34 90 Z" fill="' + C.root + '" stroke="' + C.rootLine + '" stroke-width="1.5"/>';
+    var gum = '<path d="M0 72 Q60 56 120 72 L120 90 L0 90 Z" fill="' + C.gum + '" stroke="' + C.gumLine + '" stroke-width="1.2"/>';
+    var lesion = '<ellipse cx="60" cy="' + lesionCy + '" rx="17" ry="5.5" fill="' + lesionColor + '"/>';
+    var br = '';
+    if (withBracket === "far") {
+      br = '<path d="M98 ' + (lesionCy + 5.5) + ' L98 64 M94 ' + (lesionCy + 5.5) + ' L102 ' + (lesionCy + 5.5) + ' M94 64 L102 64" stroke="' + C.text + '" stroke-width="1.2"/>' +
+        '<text x="104" y="' + ((lesionCy + 5.5 + 64) / 2 + 3) + '" font-size="8" fill="' + C.text + '" font-family="sans-serif">≥1</text>';
+    } else if (withBracket === "near") {
+      br = '<path d="M80 60 L100 50" stroke="' + C.text + '" stroke-width="1"/><text x="94" y="46" font-size="8" fill="' + C.text + '" font-family="sans-serif">&lt;1</text>';
+    }
+    return svg(crown + root + lesion + gum + br);
+  }
+
+  /* ---------- 判定基準（論文の配点） ---------- */
+  var MODES = {
+    crown: {
+      prep: '<b>評価前に</b>：プラークを除去し、エアーで乾燥させてから観察する。探針は軽い力で病変表面をなぞる。',
+      threshold: 8, range: "4〜11点", cut: "8点以上＝活動性／4〜7点＝非活動性",
+      qs: [
+        { id: "c1", title: "病変の見た目", hint: "清掃・乾燥後の外観で選ぶ。", opts: [
+          { lbl: "茶色", sub: "褐色の着色", pt: 1, pic: picBrown },
+          { lbl: "白色", sub: "白濁", pt: 3, pic: picWhite },
+          { lbl: "微小窩洞・陰影・う窩", sub: "エナメル質の崩壊、象牙質の陰影、う窩", pt: 4, pic: picCavity }
+        ]},
+        { id: "c2", title: "プラーク停滞部位にあるか", hint: "停滞部位（図の黄色）＝歯肉縁沿い、接触点の下、小窩裂溝・窩の入口。萌出途中の歯は咬合面全体が該当。", opts: [
+          { lbl: "いいえ", sub: "停滞部位から離れている", pt: 1, pic: function () { return buccal(24, 22); } },
+          { lbl: "はい", sub: "停滞部位にある", pt: 3, pic: function () { return buccal(30, 58); } }
+        ]},
+        { id: "c3", title: "探針で触れた感触", hint: "軽い力で表面をなぞる。", opts: [
+          { lbl: "滑沢・硬い", sub: "スーッと滑る", pt: 2, pic: function () { return picSmooth(false); } },
+          { lbl: "粗造・軟らかい", sub: "ザラつく／引っかかる", pt: 4, pic: picRough }
+        ]}
+      ]
+    },
+    root: {
+      prep: '<b>評価前に</b>：プラークを除去し、エアーで乾燥させてから観察する。探針は軽い力で病変に触れる。',
+      threshold: 6, range: "3〜9点", cut: "6点以上＝活動性／3〜5点＝非活動性",
+      qs: [
+        { id: "r1", title: "探針で軽く触れたときの硬さ", hint: "", opts: [
+          { lbl: "硬い", sub: "健全根面に近い", pt: 0, pic: function () { return rootTexture(0, "#4A3020"); } },
+          { lbl: "なめし革様", sub: "わずかに沈むが引っかからない", pt: 1, pic: function () { return rootTexture(2.5, "#8A5E30"); } },
+          { lbl: "軟らかい", sub: "探針が容易に入る", pt: 3, pic: function () { return rootTexture(6.5, "#D2A55A"); } }
+        ]},
+        { id: "r2", title: "表面の形", hint: "", opts: [
+          { lbl: "う窩なし、または辺縁が滑らか", sub: "探針で触れても滑らか", pt: 1, pic: picContourSmooth },
+          { lbl: "辺縁が不整なう窩", sub: "ギザギザした縁", pt: 2, pic: picContourIrregular }
+        ]},
+        { id: "r3", title: "歯肉縁からの距離", hint: "病変の歯肉側の縁から歯肉縁まで。", opts: [
+          { lbl: "1mm以上", sub: "歯肉縁から離れている", pt: 1, pic: function () { return rootSide(46, "#8A5A30", "far"); } },
+          { lbl: "1mm未満", sub: "歯肉縁に接している／近い", pt: 2, pic: function () { return rootSide(63, "#8A5A30", "near"); } }
+        ]},
+        { id: "r4", title: "病変の色", hint: "", opts: [
+          { lbl: "暗褐色〜黒色", sub: "", pt: 1, pic: function () { return rootSide(52, "#3A2415", ""); } },
+          { lbl: "明褐色〜黄色", sub: "", pt: 2, pic: function () { return rootSide(52, "#CFA25A", ""); } }
+        ]}
+      ]
+    }
+  };
+
+  var state = { mode: "crown", ans: { crown: {}, root: {} } };
+  var qEl = document.getElementById("questions");
+  var resEl = document.getElementById("result");
+  var barEl = document.getElementById("bar");
+  var prepEl = document.getElementById("prep");
+  var CIRCLED = ["①", "②", "③", "④"];
+
+  function render() {
+    var M = MODES[state.mode], A = state.ans[state.mode];
+    prepEl.innerHTML = M.prep;
+    qEl.innerHTML = M.qs.map(function (q, qi) {
+      return '<section class="q"><div class="q-head"><span class="q-no">' + CIRCLED[qi] + '</span><h2>' + q.title + '</h2></div>' +
+        (q.hint ? '<p class="hint">' + q.hint + '</p>' : '') +
+        '<div class="opts n' + q.opts.length + '">' + q.opts.map(function (o, oi) {
+          return '<button type="button" class="opt" id="opt-' + q.id + '-' + oi + '" data-q="' + q.id + '" data-o="' + oi + '" aria-pressed="' + (A[q.id] === oi) + '">' +
+            '<span class="pic">' + o.pic() + '</span><span class="lbl">' + o.lbl + '</span>' + (o.sub ? '<span class="sub">' + o.sub + '</span>' : '') + '</button>';
+        }).join('') + '</div></section>';
+    }).join('');
+    renderResult();
+  }
+
+  function renderResult() {
+    var M = MODES[state.mode], A = state.ans[state.mode];
+    var answered = M.qs.filter(function (q) { return A[q.id] !== undefined; }).length;
+    var dots = '<span class="dots">' + M.qs.map(function (q) { return '<span class="dot' + (A[q.id] !== undefined ? ' on' : '') + '"></span>'; }).join('') + '</span>';
+
+    if (answered < M.qs.length) {
+      resEl.className = "result pending";
+      resEl.innerHTML = 'すべての項目（残り' + (M.qs.length - answered) + '項目）を選ぶと、ここに判定が表示されます。';
+      barEl.innerHTML = dots + '<span>残り' + (M.qs.length - answered) + '項目</span>';
+      barEl.dataset.done = "";
+      return;
+    }
+    var total = 0, rows = M.qs.map(function (q) {
+      var o = q.opts[A[q.id]]; total += o.pt;
+      return '<tr><td>' + q.title + '：' + o.lbl + '</td><td>' + o.pt + '点</td></tr>';
+    }).join('');
+    var active = total >= M.threshold;
+    resEl.className = "result " + (active ? "is-active" : "is-inactive");
+    resEl.innerHTML =
+      '<div class="verdict"><span class="k">判定</span><span class="v">' + (active ? '活動性' : '非活動性') + '</span>' +
+      '<span class="d">' + (active ? '進行している可能性が高い病変' : '停止している可能性が高い病変') + '</span></div>' +
+      '<div class="action">' + (active
+        ? '<span class="ttl">介入が必要</span><div class="chips"><span class="chip">フッ化物塗布</span><span class="chip">シーラント</span><span class="chip">充填</span><span class="chip">など</span></div>' +
+          '<p>どの介入を選ぶかは、う窩の有無・深さや患者のリスクをふまえて歯科医師と決める。</p>'
+        : '<span class="ttl">介入は不要（経過観察）</span><p>通常の定期管理を続け、次回来院時に再評価する。</p>') +
+      '</div>' +
+      '<table class="score"><tbody>' + rows + '<tr class="total"><td>合計（' + M.cut + '）</td><td>' + total + '点</td></tr></tbody></table>' +
+      '<button type="button" class="btn" id="reset">この部位の選択をリセット</button>';
+    barEl.innerHTML = dots + '<span class="pill ' + (active ? 'a' : 'i') + '">' + (active ? '活動性 → 介入' : '非活動性 → 経過観察') + '</span>';
+    barEl.dataset.done = "1";
+  }
+
+  document.addEventListener("click", function (e) {
+    var opt = e.target.closest(".opt");
+    if (opt) {
+      var A = state.ans[state.mode], q = opt.dataset.q, o = +opt.dataset.o;
+      A[q] = A[q] === o ? undefined : o;
+      opt.parentNode.querySelectorAll(".opt").forEach(function (b) { b.setAttribute("aria-pressed", String(A[q] === +b.dataset.o)); });
+      renderResult();
+      return;
+    }
+    var tab = e.target.closest(".seg button");
+    if (tab) {
+      state.mode = tab.dataset.mode;
+      document.querySelectorAll(".seg button").forEach(function (b) { b.setAttribute("aria-selected", String(b === tab)); });
+      render();
+      return;
+    }
+    if (e.target.id === "reset") {
+      state.ans[state.mode] = {};
+      render();
+      window.scrollTo(0, 0);
+      return;
+    }
+    if (e.target.closest("#bar")) {
+      if (barEl.dataset.done) { resEl.scrollIntoView({ block: "start" }); }
+      else {
+        var A2 = state.ans[state.mode];
+        var next = MODES[state.mode].qs.find(function (q) { return A2[q.id] === undefined; });
+        if (next) document.getElementById("opt-" + next.id + "-0").closest(".q").scrollIntoView({ block: "center" });
+      }
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
